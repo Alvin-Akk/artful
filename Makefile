@@ -10,7 +10,10 @@ BUILD_DIR  = build
 OBJ_DIR    = $(BUILD_DIR)/obj
 BIN_DIR    = $(BUILD_DIR)/bin
 
-INCLUDE_DIRS = $(MSPGCC_INCLUDE_DIR)
+SRC_DIR = src
+
+INCLUDE_DIRS = $(MSPGCC_INCLUDE_DIR) \
+               $(SRC_DIR)
 LIB_DIRS     = $(MSPGCC_INCLUDE_DIR)
 
 # Toolchain
@@ -22,8 +25,12 @@ DSLITE  = $(DEBUG_BIN_DIR)/DSLite.exe
 # Files
 TARGET  = $(BIN_DIR)/sumo
 
+# Paths are relative to SRC_DIR
 SOURCES = main.c \
-          led.c
+          app/drive.c \
+          app/enemy.c \
+          drivers/i2c.c \
+          drivers/uart.c
 
 OBJECTS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SOURCES))
 
@@ -47,7 +54,7 @@ $(TARGET).hex: $(TARGET)
 	$(OBJCOPY) -O ihex $< $@
 
 # Compiling
-$(OBJ_DIR)/%.o: %.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
