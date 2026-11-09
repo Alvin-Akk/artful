@@ -19,8 +19,9 @@ LIB_DIRS     = $(MSPGCC_INCLUDE_DIR)
 # Toolchain
 CC      = $(MSPGCC_BIN_DIR)/msp430-elf-gcc
 OBJCOPY = $(MSPGCC_BIN_DIR)/msp430-elf-objcopy
-RM      = rm -rf
-DSLITE  = $(DEBUG_BIN_DIR)/DSLite.exe
+RM       = rm -rf
+DSLITE   = $(DEBUG_BIN_DIR)/DSLite.exe
+CPPCHECK = cppcheck
 
 # Files
 TARGET  = $(BIN_DIR)/sumo
@@ -59,10 +60,18 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Phonies
-.PHONY: all clean flash
+.PHONY: all clean flash cppcheck
 
 clean:
 	$(RM) $(BUILD_DIR)
+
+# Static analysis (source paths are relative to SRC_DIR)
+cppcheck:
+	@$(CPPCHECK) --quiet --enable=all --error-exitcode=1 \
+		--inline-suppr \
+		$(addprefix -I,$(INCLUDE_DIRS)) \
+		$(addprefix $(SRC_DIR)/,$(SOURCES)) \
+		-i external/printf
 
 # Flash with TI DSLite (load = program the chip and run it)
 flash: $(TARGET).hex
