@@ -1,0 +1,64 @@
+# Directories
+MSPGCC_ROOT_DIR    = $(TOOLS_PATH)/msp430-gcc
+MSPGCC_BIN_DIR     = $(MSPGCC_ROOT_DIR)/bin
+MSPGCC_INCLUDE_DIR = $(MSPGCC_ROOT_DIR)/include
+TI_CCS_DIR         = $(TOOLS_PATH)/ccs2041/ccs
+DEBUG_BIN_DIR      = $(TI_CCS_DIR)/ccs_base/DebugServer/bin
+DEBUG_CONFIG       = msp430g2553.ccxml
+
+BUILD_DIR  = build
+OBJ_DIR    = $(BUILD_DIR)/obj
+BIN_DIR    = $(BUILD_DIR)/bin
+
+INCLUDE_DIRS = $(MSPGCC_INCLUDE_DIR)
+LIB_DIRS     = $(MSPGCC_INCLUDE_DIR)
+
+# Toolchain
+CC      = $(MSPGCC_BIN_DIR)/msp430-elf-gcc
+OBJCOPY = $(MSPGCC_BIN_DIR)/msp430-elf-objcopy
+RM      = rm -rf
+DSLITE  = $(DEBUG_BIN_DIR)/DSLite.exe
+
+# Files
+TARGET  = $(BIN_DIR)/sumo
+
+SOURCES = main.c \
+          led.c
+
+OBJECTS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SOURCES))
+
+# Flags
+MCU = msp430g2553
+
+WFLAGS      = -Wall -Wextra -Werror -Wshadow
+CFLAGS      = -mmcu=$(MCU) $(WFLAGS) $(addprefix -I,$(INCLUDE_DIRS)) -Og -g
+LDFLAGS     = -mmcu=$(MCU) $(addprefix -L,$(LIB_DIRS))
+
+# Build
+all: $(TARGET).hex
+
+# Linking
+$(TARGET): $(OBJECTS)
+	@mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+# Convert ELF to Intel HEX
+$(TARGET).hex: $(TARGET)
+	$(OBJCOPY) -O ihex $< $@
+
+# Compiling
+$(OBJ_DIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Phonies
+.PHONY: all clean flash
+
+clean:
+	$(RM) $(BUILD_DIR)
+
+# Flash with TI DSLite (load = program the chip and run it)
+flash: $(TARGET).hex
+	$(DSLITE) load -c $(DEBUG_CONFIG) $<
+
+
