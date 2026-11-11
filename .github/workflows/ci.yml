@@ -9,5 +9,6 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v3
-      - run: make
+      - run: make format && git diff --quiet
       - run: make cppcheck
+      - run: make

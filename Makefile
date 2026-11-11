@@ -22,6 +22,7 @@ OBJCOPY = $(MSPGCC_BIN_DIR)/msp430-elf-objcopy
 RM       = rm -rf
 DSLITE   = $(DEBUG_BIN_DIR)/DSLite.exe
 CPPCHECK = cppcheck
+FORMAT   = clang-format
 
 # Files
 TARGET  = $(BIN_DIR)/sumo
@@ -60,7 +61,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Phonies
-.PHONY: all clean flash cppcheck
+.PHONY: all clean flash cppcheck format
 
 clean:
 	$(RM) $(BUILD_DIR)
@@ -72,6 +73,10 @@ cppcheck:
 		$(addprefix -I,$(INCLUDE_DIRS)) \
 		$(addprefix $(SRC_DIR)/,$(SOURCES)) \
 		-i external/printf
+
+# Auto-format the source files in place (source paths are relative to SRC_DIR)
+format:
+	@$(FORMAT) -i $(addprefix $(SRC_DIR)/,$(SOURCES))
 
 # Flash with TI DSLite (load = program the chip and run it)
 flash: $(TARGET).hex
