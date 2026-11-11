@@ -28,11 +28,20 @@ FORMAT   = clang-format
 TARGET  = $(BIN_DIR)/sumo
 
 # Paths are relative to SRC_DIR
-SOURCES = main.c \
+# Sources that have a corresponding header file (same name, .h instead of .c)
+SOURCES_WITH_HEADERS = \
           app/drive.c \
           app/enemy.c \
           drivers/i2c.c \
           drivers/uart.c
+
+SOURCES = \
+          main.c \
+          $(SOURCES_WITH_HEADERS)
+
+HEADERS = \
+          $(SOURCES_WITH_HEADERS:.c=.h) \
+          common/defines.h
 
 OBJECTS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SOURCES))
 
@@ -56,7 +65,7 @@ $(TARGET).hex: $(TARGET)
 	$(OBJCOPY) -O ihex $< $@
 
 # Compiling
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(addprefix $(SRC_DIR)/,$(HEADERS))
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -76,7 +85,7 @@ cppcheck:
 
 # Auto-format the source files in place (source paths are relative to SRC_DIR)
 format:
-	@$(FORMAT) -i $(addprefix $(SRC_DIR)/,$(SOURCES))
+	@$(FORMAT) -i $(addprefix $(SRC_DIR)/,$(SOURCES) $(HEADERS))
 
 # Flash with TI DSLite (load = program the chip and run it)
 flash: $(TARGET).hex
