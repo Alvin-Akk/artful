@@ -45,6 +45,19 @@ HEADERS = \
 
 OBJECTS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SOURCES))
 
+# Static analysis
+# Don't check the msp430 helper headers (they have a LOT of ifdefs)
+CPPCHECK_INCLUDES = $(SRC_DIR)
+CPPCHECK_IGNORE   = external/printf
+CPPCHECK_FLAGS    = \
+          --quiet --enable=all --error-exitcode=1 \
+          --inline-suppr \
+          --suppress=missingIncludeSystem \
+          --suppress=unmatchedSuppression \
+          --suppress=unusedFunction \
+          $(addprefix -I,$(CPPCHECK_INCLUDES)) \
+          $(addprefix -i,$(CPPCHECK_IGNORE))
+
 # Flags
 MCU = msp430g2553
 
@@ -73,15 +86,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(addprefix $(SRC_DIR)/,$(HEADERS))
 .PHONY: all clean flash cppcheck format
 
 clean:
-	$(RM) $(BUILD_DIR)
+	@$(RM) $(BUILD_DIR)
 
 # Static analysis (source paths are relative to SRC_DIR)
 cppcheck:
-	@$(CPPCHECK) --quiet --enable=all --error-exitcode=1 \
-		--inline-suppr \
-		$(addprefix -I,$(INCLUDE_DIRS)) \
-		$(addprefix $(SRC_DIR)/,$(SOURCES)) \
-		-i external/printf
+	@$(CPPCHECK) $(CPPCHECK_FLAGS) $(addprefix $(SRC_DIR)/,$(SOURCES))
 
 # Auto-format the source files in place (source paths are relative to SRC_DIR)
 format:
@@ -89,6 +98,6 @@ format:
 
 # Flash with TI DSLite (load = program the chip and run it)
 flash: $(TARGET).hex
-	$(DSLITE) load -c $(DEBUG_CONFIG) $<
+	@$(DSLITE) load -c $(DEBUG_CONFIG) $<
 
 
